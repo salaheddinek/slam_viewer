@@ -6,6 +6,35 @@
 #include <sstream>
 #include <iomanip>
 #include <vector>
+#include <limits>
+
+
+Slam_viewer::linalg::mat<float, 3, 3> Slam_viewer::Marithmetic::extract_3x3_mat(
+        const linalg::mat<float, 4, 4> mat)
+{
+    linalg::mat<float, 3, 3> res;
+    for(int i = 0; i < 3; i++)
+        for(int j = 0; j < 3; j++)
+            res[i][j] = mat[i][j];
+    return res;
+}
+
+
+bool Slam_viewer::Marithmetic::is_pose_matrix(const linalg::mat<float, 4, 4> mat)
+{
+    float margin = 10 * std::numeric_limits<float>::epsilon();
+    for(int i = 0; i < 3; i++)
+        if(fabs(mat[3][i]) > margin)
+            return false;
+    if(fabs(mat[3][3] - 1) > margin)
+        return false;
+    for(int i = 0; i < 3; i++)
+        if(!std::isfinite(mat[i][3]))
+            return false;
+
+    linalg::mat<float, 3, 3> rot = extract_3x3_mat(mat);
+    return is_rotation_matrix(rot);
+}
 
 
 float Slam_viewer::Marithmetic::angle_between_two_vectors(const linalg::vec<float, 3> vec1,
@@ -29,6 +58,7 @@ inline Slam_viewer::linalg::mat<float, 3, 3> Slam_viewer::Marithmetic::to_rot_ma
     return linalg::transpose(rot);
 //    return rot;
 }
+
 inline Slam_viewer::linalg::mat<float, 4, 4> Slam_viewer::Marithmetic::to_pose_matrix4(
         const Slam_viewer::Camera_pose pose)
 {
@@ -45,7 +75,41 @@ inline Slam_viewer::linalg::mat<float, 4, 4> Slam_viewer::Marithmetic::to_pose_m
     return res;
 }
 
-inline Slam_viewer::Quaternion Slam_viewer::Marithmetic::to_quaternion(
+bool Slam_viewer::Marithmetic::is_rotation_matrix(const linalg::mat<float, 3, 3> mat)
+{
+
+    float margin = 10 * std::numeric_limits<float>::epsilon();
+    linalg::mat<float, 3, 3> I = linalg::mul(mat, linalg::transpose(mat));
+    for(int i = 0; i < 3; i++)
+        if(fabs(I[i][i] - 1) > margin)
+            return false;
+    for(int i = 0; i < 3; i++)
+        for(int j = 0; j < 3; j++)
+            if(fabs(I[i][j]) > margin && i != j)
+                return false;
+
+    if(fabs(linalg::determinant(mat) - 1) > margin)
+        return false;
+    return true;
+}
+
+bool Slam_viewer::Marithmetic::is_float3_vector(const linalg::vec<float, 3> vec)
+{
+    for(int i = 0; i < 3; i++)
+        if(!std::isfinite(vec[i]))
+            return false;
+    return true;
+}
+
+bool Slam_viewer::Marithmetic::is_float4_vector(const linalg::vec<float, 4> vec)
+{
+    for(int i = 0; i < 4; i++)
+        if(!std::isfinite(vec[i]))
+            return false;
+    return true;
+}
+
+Slam_viewer::Quaternion Slam_viewer::Marithmetic::to_quaternion(
         const Slam_viewer::linalg::mat<float, 3, 3> mat)
 {
     Quaternion q;
@@ -56,10 +120,7 @@ inline Slam_viewer::Quaternion Slam_viewer::Marithmetic::to_quaternion(
 
 Slam_viewer::Quaternion Slam_viewer::Marithmetic::to_quaternion(const linalg::mat<float,4, 4> mat)
 {
-    linalg::mat<float, 3, 3> m;
-    m[0][0] = mat[0][0]; m[0][1] = mat[0][1]; m[0][2] = mat[0][2];
-    m[1][0] = mat[1][0]; m[1][1] = mat[1][1]; m[1][2] = mat[1][2];
-    m[2][0] = mat[2][0]; m[2][1] = mat[2][1]; m[2][2] = mat[2][2];
+    linalg::mat<float, 3, 3> m = extract_3x3_mat(mat);
     return to_quaternion(m);
 }
 
@@ -89,10 +150,19 @@ template<typename T> void Slam_viewer::Marithmetic::printm(
     if(prefix != "")
         ss << prefix << " = \n";
 
+    size_t maxl = 0;
+    for(size_t i = 0; i < rows; i++){
+        for(size_t j = 0 ; j < cols; j++){
+            std::stringstream stmp;
+            stmp << std::setprecision(6) << mat[i][j];
+            std::string tmp = stmp.str();
+            maxl = tmp.size() > maxl ? tmp.size(): maxl;
+        }
+    }
     for(size_t i = 0; i < rows; i++){
         ss << "[ ";
         for(size_t j = 0; j < cols; j++){
-            ss << std::setw(7) << std::setprecision(6) << mat[i][j];
+            ss << std::setw(maxl) << std::setprecision(6) << mat[i][j];
             if(j < cols - 1)
                 ss << ", ";
         }

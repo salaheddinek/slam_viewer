@@ -1,8 +1,7 @@
 #pragma once
-#include "internal_types.hpp"
 #include "linalg.hpp"
 
-
+#include <array>
 #include <vector>
 #include <string>
 
@@ -12,20 +11,43 @@ namespace Slam_viewer {
 //  +--------------------------------------------------------
 //  |       Relevent types for Viewer
 //  +--------------------------------------------------------
+//  |
 //  | Here goes all the types that are used in viewer.hpp
-//  | these type are efined in "internal_types.hpp"
+//  |
 //  +--------------------------------------------------------
 
-struct Position;  /// contains three floats: x, y, z
-struct Quaternion;  /// contains four floats: x, y, z, w
-struct Camera_pose;  /// contains one position 'p', and one quaternion 'q'
-struct Color;  /// contains three uint8_t: r, g, b
+struct Position {
+    float x, y ,z;
+};
+struct Quaternion {
+    float x, y, z, w;
+};
+struct Camera_pose{
+    Position p;
+    Quaternion q;
+};
+
+struct Color {
+    uint8_t r, g, b;
+};
+
+struct Triangle {
+    uint32_t a, b, c;
+};
+
+struct Point {
+    float x, y, z;
+    Slam_viewer::Color c;
+};
 
 
 //  +--------------------------------------------------------
 //  |       The viewer class
 //  +--------------------------------------------------------
 //  |
+//  |
+//  |
+//  | PS: This class throws std::runtime_error in case of failure
 //  |
 //  +--------------------------------------------------------
 
@@ -40,11 +62,9 @@ public:
     inline void set_resize_factor_for_links(const float resize_for_links)
     {m_resize_for_links = resize_for_links;}
 
-    inline void set_first_camera_color(const Color color)
-    {m_first_color = color;}
+    inline void set_first_camera_color(const int r, const int g, const int b);
 
-    inline void set_last_camera_color(const Color color)
-    {m_last_color = color;}
+    inline void set_last_camera_color(const int r, const int g, const int b);
 
     inline void set_cameras_downsample_factor(const int downsample)
     {m_downsample_cameras = downsample;}
@@ -53,13 +73,24 @@ public:
     {m_downsample_links = downsample;}
 
     void set_cameras_poses(const std::vector<Camera_pose>& cameras_poses)
-    {m_cameras_poses = cameras_poses;}
+    {m_cameras_poses = cameras_poses; m_errors.clear();}
 
-    inline bool write_cameras_trajectory_to_ply_file(const std::string output_path);
+    void set_camera_poses_from_file(const std::string poses_file_path);
+
+    inline void write_cameras_trajectory_to_ply_file(const std::string output_path);
 
     inline float get_resize_factor() const{return m_resize;}
 
     inline std::vector<std::string> get_errors_if_unsuccessful() const {return m_errors;}
+
+
+//  +--------------------------------------------------------
+//  |       The private viewer class functions
+//  +--------------------------------------------------------
+//  |
+//  | These are the viewer private function and member variables
+//  |
+//  +--------------------------------------------------------
 
 private:
     std::vector<Camera_pose> m_cameras_poses;
@@ -75,13 +106,18 @@ private:
     int m_downsample_cameras {1};
     int m_downsample_links {1};
 
+    size_t m_camera_idx {0};
+    size_t m_link_idx {0};
+
     std::vector<std::string> m_errors;
 
 private:
 
+    inline void normalize_quaternions();
+
     inline std::vector<size_t> downsample_num_cameras(const int downsample_ratio) const;
 
-    inline bool make_all_cameras();
+    inline void make_all_cameras();
 
     inline void make_camera_geometry(const Color color,
                                      const Camera_pose pose);
@@ -103,7 +139,13 @@ private:
                                   const Camera_pose & pose1,
                                   const Camera_pose & pose2);
 
-    bool write_data_to_file(const std::string output_path);
+    void write_data_to_file(const std::string output_path);
+
+    std::string cam_idx() const;
+
+    std::string link_idx() const;
+
+    uint8_t color_bound(const int c) const;
 
 };
 
