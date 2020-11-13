@@ -56,6 +56,8 @@ class Viewer {
 public:
     inline Viewer(){}
 
+    inline void print_settings() const;
+
     inline void set_resize_factor(const float resize)
     {m_resize = resize;}
 
@@ -72,17 +74,18 @@ public:
     inline void set_links_downsample_factor(const int downsample)
     {m_downsample_links = downsample;}
 
-    void set_cameras_poses(const std::vector<Camera_pose>& cameras_poses)
-    {m_cameras_poses = cameras_poses; m_errors.clear();}
-
-    void set_camera_poses_from_file(const std::string poses_file_path);
+    inline void set_cameras_poses(const std::vector<Camera_pose>& cameras_poses)
+    {m_cameras_poses = cameras_poses;}
 
     inline void write_cameras_trajectory_to_ply_file(const std::string output_path);
 
+    inline void set_verbose(const bool verbose)
+    {m_verbose = verbose;}
+
     inline float get_resize_factor() const{return m_resize;}
 
-    inline std::vector<std::string> get_errors_if_unsuccessful() const {return m_errors;}
-
+    inline static std::vector<Camera_pose>
+    load_camera_poses_from_file(const std::string poses_file_path);
 
 //  +--------------------------------------------------------
 //  |       The private viewer class functions
@@ -105,11 +108,10 @@ private:
 
     int m_downsample_cameras {1};
     int m_downsample_links {1};
+    bool m_verbose {false};
 
     size_t m_camera_idx {0};
     size_t m_link_idx {0};
-
-    std::vector<std::string> m_errors;
 
 private:
 
@@ -146,6 +148,10 @@ private:
     std::string link_idx() const;
 
     uint8_t color_bound(const int c) const;
+
+    void vcout(const std::string msg) const;
+
+    void vcerr(const std::string msg) const;
 
 };
 

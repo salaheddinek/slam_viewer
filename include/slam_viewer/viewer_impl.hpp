@@ -39,6 +39,22 @@ void Slam_viewer::Viewer::set_last_camera_color(const int r, const int g, const 
 }
 
 
+void Slam_viewer::Viewer::print_settings() const
+{
+    vcout("");
+    vcout("Viewer settings:");
+    vcout(" - Camera resize: " + std::to_string(m_resize));
+    vcout(" - Subsampling the number of cameras: " + std::to_string(m_downsample_cameras));
+    vcout(" - Subsampling the number of links: " + std::to_string(m_downsample_links));
+    vcout(" - First Camera color: [ r:" + std::to_string(static_cast<int>(m_first_color.r))
+          + " , g:" + std::to_string(static_cast<int>(m_first_color.g))
+           + " , b:" + std::to_string(static_cast<int>(m_first_color.b)) + " ]");
+    vcout(" - Last Camera color: [ r:" + std::to_string(static_cast<int>(m_last_color.r))
+          + " , g:" + std::to_string(static_cast<int>(m_last_color.g))
+           + " , b:" + std::to_string(static_cast<int>(m_last_color.b)) + " ]");
+    vcout("");
+}
+
 void Slam_viewer::Viewer::write_cameras_trajectory_to_ply_file(const std::string output_path)
 {
     // clear used member variables
@@ -49,7 +65,10 @@ void Slam_viewer::Viewer::write_cameras_trajectory_to_ply_file(const std::string
     m_camera_idx = 1;
     m_link_idx = 1;
 
+    this->print_settings();
+
     // make the cameras and links geometries
+    vcout("Normalizing quaternions");
     this->normalize_quaternions();
 
     this->make_all_cameras();
@@ -69,6 +88,7 @@ void Slam_viewer::Viewer::write_cameras_trajectory_to_ply_file(const std::string
 
     // save the result to output file path
     this->write_data_to_file(path);
+    vcout("Successfully saved trajectory to: " + path);
 }
 
 void Slam_viewer::Viewer::normalize_quaternions()
@@ -115,11 +135,15 @@ void Slam_viewer::Viewer::make_all_cameras()
                                  ": cameras poses array is empty.");
     }
 
+    vcout("Calculating colors gradiants");
     set_cameras_colors(static_cast<uint>(m_cameras_poses.size()));
 
     ASSERT(m_cameras_colors.size() != 0, "colors array is empty");
 
+
     std::vector<size_t> cameras_indices = downsample_num_cameras(m_downsample_cameras);
+    vcout("Showing " + std::to_string(cameras_indices.size()) + "/" +
+          std::to_string(m_cameras_poses.size()) + " Cameras");
 
     ASSERT(cameras_indices.size() != 0, "cameras indices array is empty");
 
@@ -128,7 +152,11 @@ void Slam_viewer::Viewer::make_all_cameras()
         m_camera_idx = i + 1;
     }
 
+
     std::vector<size_t> links_indices = downsample_num_cameras(m_downsample_links);
+
+    vcout("Showing " + std::to_string(links_indices.size() - 1) + "/" +
+          std::to_string(links_indices.size() - 1) + " Links");
 
     ASSERT(links_indices.size() != 0, "links indices array is empty");
 
@@ -159,13 +187,13 @@ void Slam_viewer::Viewer::make_camera_geometry(
     std::vector<linalg::vec<float, 4>> points;
     points = {{0, 0, 0, 1}, {0.75, 0.5, 1, 1}, {-0.75, 0.5, 1, 1},
               {-0.75, -0.5, 1, 1}, {0.75, -0.5, 1, 1},
-              {-0.2f, -0.5, 1, 1} , {0.2f, -0.5f, 1, 1}, {0, -0.7f, 1, 1},
+              {-0.2f, 0.5, 1, 1} , {0.2f, 0.5f, 1, 1}, {0, 0.7f, 1, 1},
               {0, 0, 0.5f, 1}};
 
     std::vector<Triangle> triangles;
     triangles = {{0, 2, 1}, {0, 1, 4}, {0, 4, 3},
                  {0, 3, 2}, {2, 3, 4}, {1, 2, 4},
-                 {6, 5, 7}, {7, 5, 8}, {6, 7, 8}};
+                 {5, 6, 7}, {5, 7, 8}, {7, 6, 8}};
 
     for(uint i = 0; i < 9; i++){
         Point tmp_point;
@@ -376,12 +404,14 @@ void Slam_viewer::Viewer::write_data_to_file(const std::string output_path)
 
 }
 
-void Slam_viewer::Viewer::set_camera_poses_from_file(const std::string poses_file_path)
+std::vector<Slam_viewer::Camera_pose>
+Slam_viewer::Viewer::load_camera_poses_from_file(const std::string poses_file_path)
 {
     std::ifstream strm(poses_file_path);
     if(!strm){
         throw std::runtime_error("In load_poses_from_file: unable to open file under: " + poses_file_path + ".");
     }
+    std::vector<Camera_pose> poses;
     std::string line;
     size_t lidx = 1;
     while(std::getline(strm, line)){
@@ -417,10 +447,11 @@ void Slam_viewer::Viewer::set_camera_poses_from_file(const std::string poses_fil
         }
 
 
-        m_cameras_poses.push_back(pose);
+        poses.push_back(pose);
         lidx++;
     }
     strm.close();
+    return poses;
 }
 
 
@@ -441,4 +472,16 @@ uint8_t Slam_viewer::Viewer::color_bound(const int c) const
     if(c < 0)
         return 0;
     return static_cast<uint8_t>(c);
+}
+
+void Slam_viewer::Viewer::vcout(const std::string msg) const
+{
+    if(m_verbose)
+        std::cout << msg << std::endl;
+}
+
+void Slam_viewer::Viewer::vcerr(const std::string msg) const
+{
+    if(m_verbose)
+        std::cerr << msg << std::endl;
 }

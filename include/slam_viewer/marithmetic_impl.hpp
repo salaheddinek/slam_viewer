@@ -1,4 +1,4 @@
-#pragma once
+    #pragma once
 #include "marithmetic.hpp"
 
 #include <cmath>
@@ -109,6 +109,17 @@ bool Slam_viewer::Marithmetic::is_float4_vector(const linalg::vec<float, 4> vec)
     return true;
 }
 
+bool Slam_viewer::Marithmetic::is_finite(const Camera_pose pose)
+{
+    if(!std::isfinite(pose.p.x) || !std::isfinite(pose.p.y) || !std::isfinite(pose.p.z))
+        return false;
+    if(!std::isfinite(pose.q.x) || !std::isfinite(pose.q.y)
+            || !std::isfinite(pose.q.z) || !std::isfinite(pose.q.w))
+        return false;
+
+    return true;
+}
+
 Slam_viewer::Quaternion Slam_viewer::Marithmetic::to_quaternion(
         const Slam_viewer::linalg::mat<float, 3, 3> mat)
 {
@@ -123,6 +134,20 @@ Slam_viewer::Quaternion Slam_viewer::Marithmetic::to_quaternion(const linalg::ma
     linalg::mat<float, 3, 3> m = extract_3x3_mat(mat);
     return to_quaternion(m);
 }
+
+
+inline Slam_viewer::Quaternion Slam_viewer::Marithmetic::normalize(const Quaternion q)
+{
+    Quaternion nq = q;
+    float norm = sqrtf(nq.x * nq.x + nq.y * nq.y + nq.z * nq.z + nq.w * nq.w);
+    nq.x /= norm;
+    nq.y /= norm;
+    nq.z /= norm;
+    nq.w /= norm;
+    return nq;
+}
+
+
 
 template<typename T> void Slam_viewer::Marithmetic::printv(
         const T vec, size_t size, const std::string prefix)
@@ -171,4 +196,15 @@ template<typename T> void Slam_viewer::Marithmetic::printm(
 
     std::string str = ss.str();
     std::cout << str;
+}
+
+
+template <typename T>
+std::string Slam_viewer::Marithmetic::to_string_with_precision(const T a_value, const int n)
+{
+    std::ostringstream out;
+    out.precision(n);
+//    out << std::fixed << a_value;
+    out << a_value;
+    return out.str();
 }
