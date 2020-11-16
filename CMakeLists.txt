@@ -5,9 +5,6 @@ project (Slam_viewer)
 
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Werror -Wall -O3 -static-libstdc++ -static-libgcc")  # -Werror  -Wall
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin")
-
-
 include_directories("${PROJECT_SOURCE_DIR}/include")
 
 file (GLOB files "${PROJECT_SOURCE_DIR}/src/*.cpp")
