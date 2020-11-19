@@ -23,6 +23,15 @@
 #endif
 
 
+Slam_viewer::Quaternion Slam_viewer::Quaternion::operator*(const Quaternion& q1) const
+{
+    return Marithmetic::multiply(*this, q1);
+}
+
+void Slam_viewer::Quaternion::from_euler_in_degrees(const float rx, const float ry, const float rz)
+{
+    *this = Marithmetic::from_euler_in_degrees(rx, ry ,rz);
+}
 
 void Slam_viewer::Viewer::set_first_camera_color(const int r, const int g, const int b)
 {
@@ -145,7 +154,7 @@ void Slam_viewer::Viewer::make_all_cameras()
     vcout("Showing " + std::to_string(cameras_indices.size()) + "/" +
           std::to_string(m_cameras_poses.size()) + " Cameras");
 
-    ASSERT(cameras_indices.size() != 0, "cameras indices array is empty");
+//    ASSERT(cameras_indices.size() != 0, "cameras indices array is empty");
 
     for(size_t i: cameras_indices){
         make_camera_geometry(m_cameras_colors[i], m_cameras_poses[i]);
@@ -154,6 +163,9 @@ void Slam_viewer::Viewer::make_all_cameras()
 
 
     std::vector<size_t> links_indices = downsample_num_cameras(m_downsample_links);
+
+    if(links_indices.empty())
+        return ;
 
     vcout("Showing " + std::to_string(links_indices.size() - 1) + "/" +
           std::to_string(links_indices.size() - 1) + " Links");
@@ -240,6 +252,7 @@ void Slam_viewer::Viewer::set_cameras_colors(const size_t size)
         tmp_color.b = static_cast<uint8_t>(m_first_color.b - (m_first_color.b - m_last_color.b) * idx / sizef);
         m_cameras_colors.push_back(tmp_color);
     }
+    m_cameras_colors.back() = m_last_color;
 }
 
 
@@ -247,6 +260,8 @@ Slam_viewer::linalg::mat<float, 3, 3> Slam_viewer::Viewer::get_rotation_between_
         const linalg::vec<float, 3>& cam1,
         const linalg::vec<float, 3>& cam2) const
 {
+    linalg::mat<float, 3, 3> rot = linalg::identity;
+
     ASSERT(Marithmetic::is_float3_vector(cam1), link_idx());
     ASSERT(Marithmetic::is_float3_vector(cam2), link_idx());
 
@@ -254,6 +269,9 @@ Slam_viewer::linalg::mat<float, 3, 3> Slam_viewer::Viewer::get_rotation_between_
     An = linalg::normalize(An);
     ASSERT(Marithmetic::is_float3_vector(An), link_idx());
 
+    float eps = 10 * std::numeric_limits<float>::epsilon();
+    if(fabs(An[0]) <= eps && fabs(An[1])  <= eps && fabs(An[2] - 1)  <= eps)
+        return rot;
 
 
     linalg::vec<float, 3> Bn {0, 0, 1};
@@ -265,7 +283,7 @@ Slam_viewer::linalg::mat<float, 3, 3> Slam_viewer::Viewer::get_rotation_between_
     float angle = Marithmetic::angle_between_two_vectors(An, Bn);
     ASSERT(std::isfinite(angle), link_idx());
 
-    linalg::mat<float, 3, 3> rot = linalg::identity;
+
     if(fabs(angle) >= std::numeric_limits<float>::epsilon()){
         linalg::vec<float, 3> axis = linalg::normalize(linalg::cross(An, new_BN));
         linalg::mat<float, 4, 4> rot4 = linalg::rotation_matrix(linalg::rotation_quat(axis, angle));

@@ -13,7 +13,7 @@ namespace Slam_viewer {
 //  +--------------------------------------------------------
 //  |
 //  | Here goes all the types that are used in viewer.hpp
-//  |
+//  |Quaternion
 //  +--------------------------------------------------------
 
 struct Position {
@@ -21,6 +21,8 @@ struct Position {
 };
 struct Quaternion {
     float x, y, z, w;
+    inline Quaternion operator*(const Quaternion& q1) const;
+    inline void from_euler_in_degrees(const float rx, const float ry, const float rz);
 };
 struct Camera_pose{
     Position p;
@@ -56,34 +58,46 @@ class Viewer {
 public:
     inline Viewer(){}
 
+    //! print all settings used by this class using std::cout
     inline void print_settings() const;
 
+    //! resize factor is used to set the dimensions of the cameras and links between them
     inline void set_resize_factor(const float resize)
     {m_resize = resize;}
 
+    //! link resize factor is used to set the dimensions of the links alone
     inline void set_resize_factor_for_links(const float resize_for_links)
     {m_resize_for_links = resize_for_links;}
 
+    //! set the color of the first camera in RGB, each channel shoud be between 0 and 255
     inline void set_first_camera_color(const int r, const int g, const int b);
 
+    //! set the color of the last camera in RGB, each channel shoud be between 0 and 255
     inline void set_last_camera_color(const int r, const int g, const int b);
 
+    //! set how many cameras will be shown, 0 means no camera will be shown
     inline void set_cameras_downsample_factor(const int downsample)
     {m_downsample_cameras = downsample;}
 
+    //! set how many links will be shown, 0 means no links between cameras will be shown
     inline void set_links_downsample_factor(const int downsample)
     {m_downsample_links = downsample;}
 
+    //! each camera pose determine the orientation and the position of the camera in 3D
     inline void set_cameras_poses(const std::vector<Camera_pose>& cameras_poses)
     {m_cameras_poses = cameras_poses;}
 
+    //! calculate the geometry of the cameras and save the 3D to a .ply file
     inline void write_cameras_trajectory_to_ply_file(const std::string output_path);
 
+    //! if true then the class will print info message
     inline void set_verbose(const bool verbose)
     {m_verbose = verbose;}
 
+    //! get the resize factor of cameras
     inline float get_resize_factor() const{return m_resize;}
 
+    //! ger camera poses from file, each line in the file should be on the form [... p.x p.y p.z q.x q.y q.z q.w]
     inline static std::vector<Camera_pose>
     load_camera_poses_from_file(const std::string poses_file_path);
 

@@ -24,7 +24,23 @@ int main(int argc, const char *argv[]) {
     cxxopts::ParseResult options = args_aparsing(argc, argv);
 
 
+    std::vector<Slam_viewer::Camera_pose> cameras;
+    {
+        Slam_viewer::Camera_pose cam1;
+        cam1.p = {0, 0.5f, 1};  // camera position in the form: [x, y, z]
+        cam1.q = {0, 0, 0, 1};  // camera orientation in the form of quaternion: [x, y, z, w]
+        Slam_viewer::Camera_pose cam2;
+        cam2.p = {0, 1, 1};
+        cam2.q = {0, 0.7071068f, 0, 0.7071068f};
 
+        std::vector<Slam_viewer::Camera_pose> cameras = {cam1, cam2};
+
+
+        Slam_viewer::Viewer viewer;
+        viewer.set_cameras_poses(cameras);
+
+        viewer.write_cameras_trajectory_to_ply_file("trajectory.ply");
+    }
     bool verbose = options.count("verbose");
 
     cout_if(verbose,"");
@@ -127,24 +143,13 @@ void apply_angle_correction(const std::vector<float>& correction_angles,
     cout_if(verbose, "Applying angle to all poses: [rx=" + std::to_string(rot[0])
             + ", ry=" + std::to_string(rot[1]) + ", rz=" + std::to_string(rot[2]) + "]");
 
-    const float ratio = static_cast<float>(M_PI / 180);
 
-    sl::vec<float, 4> qx = sl::rotation_quat({1.0f, 0.0f, 0.0f}, rot[0] * ratio);
-    sl::vec<float, 4> qy = sl::rotation_quat({0.0f, 1.0f, 0.0f}, rot[1] * ratio);
-    sl::vec<float, 4> qz = sl::rotation_quat({0.0f, 0.0f, 1.0f}, rot[2] * ratio);
-
-    sl::vec<float, 4> correction = sl::qmul(qx, qy, qz);
-
+    Slam_viewer::Quaternion correction;
+    correction.from_euler_in_degrees(rot[0], rot[1], rot[2]);
 
 //    Slam_viewer::Marithmetic::printv(correction, 4, "correction_quaternion");
     for(auto& pose: poses){
-        sl::vec<float, 4> ql = {pose.q.x, pose.q.y, pose.q.z, pose.q.w};
-        sl::vec<float, 4> q_new = sl::qmul(ql, correction);
-//        Slam_viewer::Marithmetic::printv(q_new, 4, "q_new");
-        pose.q.x = q_new.x;
-        pose.q.y = q_new.y;
-        pose.q.z = q_new.z;
-        pose.q.w = q_new.w;
+        pose.q = pose.q * correction;
     }
 
 }

@@ -9,6 +9,32 @@
 #include <limits>
 
 
+Slam_viewer::Quaternion Slam_viewer::Marithmetic::multiply(const Quaternion& a,
+                                                           const Quaternion& b)
+{
+    Quaternion res;
+    res.x = a.x*b.w+a.w*b.x+a.y*b.z-a.z*b.y;
+    res.y = a.y*b.w+a.w*b.y+a.z*b.x-a.x*b.z;
+    res.z = a.z*b.w+a.w*b.z+a.x*b.y-a.y*b.x;
+    res.w = a.w*b.w-a.x*b.x-a.y*b.y-a.z*b.z;
+    return res;
+}
+
+Slam_viewer::Quaternion Slam_viewer::Marithmetic::from_euler_in_degrees(const float rx,
+                                                                        const float ry,
+                                                                        const float rz)
+{
+    namespace sl = Slam_viewer::linalg;
+    const float ratio = static_cast<float>(M_PI / 180);
+    sl::vec<float, 4> qx = sl::rotation_quat({1.0f, 0.0f, 0.0f}, rx * ratio);
+    sl::vec<float, 4> qy = sl::rotation_quat({0.0f, 1.0f, 0.0f}, ry * ratio);
+    sl::vec<float, 4> qz = sl::rotation_quat({0.0f, 0.0f, 1.0f}, rz * ratio);
+
+    sl::vec<float, 4> res = sl::qmul(qx, qy, qz);
+    return {res.x, res.y, res.z, res.w};
+}
+
+
 Slam_viewer::linalg::mat<float, 3, 3> Slam_viewer::Marithmetic::extract_3x3_mat(
         const linalg::mat<float, 4, 4> mat)
 {

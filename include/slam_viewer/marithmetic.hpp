@@ -6,6 +6,10 @@
 namespace Slam_viewer {
 namespace Marithmetic {
 
+inline Quaternion multiply(const Quaternion& a, const Quaternion& b);
+
+inline Quaternion from_euler_in_degrees(const float rx, const float ry, const float rz);
+
 
 inline linalg::mat<float, 3, 3> extract_3x3_mat(const linalg::mat<float, 4, 4> mat);
 
