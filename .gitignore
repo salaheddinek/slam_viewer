@@ -30,3 +30,11 @@
 *.exe
 *.out
 *.app
+
+# kde directory
+.directory
+*.user
+
+# directories
+/bin
+/editor
