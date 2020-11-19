@@ -136,6 +136,8 @@ void apply_angle_correction(const std::vector<float>& correction_angles,
         cerr_if(verbose, "Warning: Wrong format of angle, use example: --angle=<rx>,<ry>,<rz>");
         return;
     }
+
+
     std::vector<float> rot = correction_angles;
     if(fabs(rot[0]) + fabs(rot[1]) + fabs(rot[2]) <= (10 * std::numeric_limits<float>::epsilon()))
         return;
@@ -148,6 +150,7 @@ void apply_angle_correction(const std::vector<float>& correction_angles,
     correction.from_euler_in_degrees(rot[0], rot[1], rot[2]);
 
 //    Slam_viewer::Marithmetic::printv(correction, 4, "correction_quaternion");
+
     for(auto& pose: poses){
         pose.q = pose.q * correction;
     }

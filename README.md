@@ -245,7 +245,50 @@ The default value of the camera size is **0.04**, which can be changed by callin
 
 ## Camera orientation
 
+Camera orientation by default is directed toward the z-axis. The following figure shows a camera at position ```[x:0, y:0, z:0]``` and with the default orientation which is  equal to the Quaternion ```[x:0, y:0, z:0, w:0]``` :
+
+ <p align="center">
+<img src="images/camera_orientation.jpg"  width="500" />
+</p>
+
+It is worth mentioning that the top of the camera is facing the opposite direction of the y-axis, this choice has been made to accommodate the fact that most image analysis programs inverse the y-axis while indexing pixels in an image. In other words, the bottom left pixel on a image has a positive **y** coordinate.
+
+If the user which to change the default orientation of the camera, this can be achieved by following one of these two methods:
+
+* **Including the library**: The orientation of the camera can be changed  by applying the same oration on all camera poses. To achieve this, we have to multiply each pose Quaternion with the same correction Quaternion. 
+
+To illustrate this, the following example shows how to apply 90 degree angle change to the z-axis:
+
+```cpp
+std::vector<Slam_viewer::Camera_pose> poses;
+poses = Slam_viewer::Viewer::load_camera_poses_from_file(".../path_to_frames_file.txt");
+                
+Slam_viewer::Quaternion correction;
+
+correction.from_euler_in_degrees(0, 0, 90);
+
+for(auto& pose: poses){
+    pose.q = pose.q * correction;
+}
+```
+
+
+* **Using the binary**: Applying a rotation to all cameras can be done by using the command ```-a <rx>,<ry>,<rz>```. If we take the same example, applying 90 degree angle change to the z-axis is done by ```./slam_viewer -a 0,0,90```. 
+ <p align="center">
+<img src="images/camera_orientation_2.jpg" />
+</p>
+
 ## Meshlab
+
+Meshlab ([https://www.meshlab.net/](https://www.meshlab.net/)) is an open source system for processing and editing 3D triangular meshes.
+It can read an render multiple 3D file formats include '.ply' used by our library. 
+
+The following figure show sa simple way to view the camera trajectory alongside with the 3D surface data reconstructed from the same set of camera frames:
+
+ <p align="center">
+<img src="images/meshlab.gif" />
+</p>
+
 
 # License
 
@@ -255,8 +298,8 @@ We use a permissive BSD-3-Clause License  which allows easy integration of our l
 
 At the end we would like to give thanks to developers of two open source Github projects that has been used in ```Slam_viewer```:
 
-* [linalg.h](https://github.com/sgorsten/linalg#quaternion-algebra): Which is a header only library used for linear algebra computation in our library.
+* **linalg.h** : Which is a header only library used for linear algebra computation in our library (link: [https://github.com/sgorsten/linalg](https://github.com/sgorsten/linalg)).
 
-* [cxxopts](https://github.com/jarro2783/cxxopts): Which is also a header only library used to process program options for our slam_viewer binary (but not used in the our library).
+* **cxxopts** : Which is also a header only library used to process program options for our slam_viewer binary (but not used in the our library) (link: [https://github.com/jarro2783/cxxopts](https://github.com/jarro2783/cxxopts)).
 
 Both These projects have permissive license which integrates well with BSD-3.
