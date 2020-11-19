@@ -1,6 +1,6 @@
 # Slam_viewer
 
-**Slam_viewer** is an open source and header only multi-platform library to view camera trajectory offline.  
+**Slam_viewer** is an open source and header only multi-platform library to view the camera trajectory offline.  
 
 <p align="center">
 <img src="images/introduction.png"  width="500" />
@@ -22,7 +22,7 @@ Some feature of the **slam_viewer** library:
 * **Easy to integrate**: The library defines no symbols in the public namespace. It also provides a centralized single class to save the camera trajectory.
 
 
-If you use this libraries, please cite our paper as shown below:
+If you use this library, please cite our paper as shown below:
 
 ```
 @inproceedings{kabbour2018human,
@@ -56,7 +56,7 @@ In the following we present the documentation of the library:
 
 # Usage modes
 
-The library's aim to produce a ```.ply``` file which can be viewed by an open source cross platform program called [Meshlab](https://www.meshlab.net/).
+The library's aim to produce a ```.ply``` file which can be viewed by an open source cross platform program called Meshlab ([https://www.meshlab.net/](https://www.meshlab.net/)).
 
 Section [Meshlab](#meshlab) shows a simple way to use this program to produce powerful results.
 
@@ -201,7 +201,7 @@ To use the binary for this purpose one can execute the following command:
 ./build/slam_viewer -i ./trajectory_data/150_frames.txt -o trajectory.ply -r 0.003
  ```
  
- The result of the above example should give the following result:
+ The output of the above example should give the following result:
  
  <p align="center">
 <img src="images/binary_example.png"  width="400" />
@@ -209,7 +209,54 @@ To use the binary for this purpose one can execute the following command:
 
 # Data format
 
+Each camera frame is characterized by a pose: position and orientation. The position is defined by its 3D coordinates **x**, **y** and **z**. However the Rotation in 3D can be defined by a 3-by-3 rotation matrix, axis-angle rotation, Euler XYZ rotation vector or by a Quaternion. The following website [https://www.andre-gaschler.com/rotationconverter/](https://www.andre-gaschler.com/rotationconverter/) can be used for different rotation representations conversion.
 
+In our library, only Quaternions are supported. There exist two methods of loading data to the viewer class:
+
+### Using the Library's API
+
+The following function is used to tell the viewer class the position and the orientation of the different cameras:
+
+```cpp
+Viewer::void set_cameras_poses(const std::vector<Camera_pose>& cameras_poses)
+```
+
+In the following we show the different data structure used as input for this function:
+
+```cpp
+struct Position {
+    float x, y ,z;
+};
+struct Quaternion {
+    float x, y, z, w;
+    inline Quaternion operator*(const Quaternion& q1) const;
+    inline void from_euler_in_degrees(const float rx, const float ry, const float rz);
+};
+struct Camera_pose{
+    Position p;
+    Quaternion q;
+};
+```
+
+### Using binary / library to load data from text file
+
+We also provide a method to load poses directly from a file.
+
+This is done by calling the static function:
+
+```cpp
+std::vector<Camera_pose> load_camera_poses_from_file(const std::string poses_file_path)
+```
+
+Or using the binary ```-i <file-path>``` command line.
+
+Each line in the file represents a camera pose, and all values should be separated by a space.
+So each line should be in the form:
+```
+[... p.x p.y p.z q.x q.y q.z q.w]
+```
+
+With ```p``` means the position, and ```q``` means the orientation in Quaternion. The ```...``` could be anything and will be neglected by the loading function.
 
 # Usage Options
 
@@ -217,15 +264,15 @@ There are multiple options to using the library, the following list explains the
 
 * **1. Resizing Cameras**: Resizing the camera is used to in order to adapt the camera cones size to that of the 3D structure.
 
-The default value of the camera size is **0.04**, which can be changed by calling the function ```Viewer::set_resize_factor``` or by running binary command option ```./slam_viewer -r <size>```. PS: camera links are size is proportional to that of the camera geometry.
+The default value of the camera size is **0.04**, which can be changed by calling the function ```Viewer::set_resize_factor``` or by running binary command option ```./slam_viewer -r <size>```. PS: camera links size is proportional to that of the camera geometry.
 
 <p align="center">
 <img src="images/resize_factor.jpg"/>
 </p>
 
-* **2. Camera sub-sampling**: Sometimes camera frames are too close in trajectory and needs to be sub-sampled. This can be done by calling ```Viewer::set_cameras_downsample_factor``` function or by command option ```./slam_viewer -s <factor>```. A sub-sample factor of 3 means that one each three camera frame is shown.
+* **2. Camera sub-sampling**: Sometimes camera frames are too close in trajectory and need to be sub-sampled. This can be done by calling ```Viewer::set_cameras_downsample_factor``` function or by command option ```./slam_viewer -s <factor>```. A sub-sample factor of 3 means that one in three camera frames is shown.
 
-* **3. Link sub-sampling**: Same as the previous one, this one is used to sub-sampling links between camera frames. This can be done by calling ```Viewer::set_links_downsample_factor``` function or by command option ```./slam_viewer -k <factor>```. A sub-sample factor of 3 means that one each three links is shown.
+* **3. Link sub-sampling**: Same as the previous one, this one is used to sub-sampling links between camera frames. This can be done by calling ```Viewer::set_links_downsample_factor``` function or by command option ```./slam_viewer -k <factor>```. A sub-sample factor of 3 means that one in three links is shown.
 
 <p align="center">
 <img src="images/sub-sample.jpg"/>
@@ -243,6 +290,8 @@ The default value of the camera size is **0.04**, which can be changed by callin
 
 # Advanced Usage
 
+
+
 ## Camera orientation
 
 Camera orientation by default is directed toward the z-axis. The following figure shows a camera at position ```[x:0, y:0, z:0]``` and with the default orientation which is  equal to the Quaternion ```[x:0, y:0, z:0, w:0]``` :
@@ -253,7 +302,7 @@ Camera orientation by default is directed toward the z-axis. The following figur
 
 It is worth mentioning that the top of the camera is facing the opposite direction of the y-axis, this choice has been made to accommodate the fact that most image analysis programs inverse the y-axis while indexing pixels in an image. In other words, the bottom left pixel on a image has a positive **y** coordinate.
 
-If the user which to change the default orientation of the camera, this can be achieved by following one of these two methods:
+If the user wishes to change the default orientation of the camera, this can be achieved by following one of these two methods:
 
 * **Including the library**: The orientation of the camera can be changed  by applying the same oration on all camera poses. To achieve this, we have to multiply each pose Quaternion with the same correction Quaternion. 
 
@@ -283,11 +332,12 @@ for(auto& pose: poses){
 Meshlab ([https://www.meshlab.net/](https://www.meshlab.net/)) is an open source system for processing and editing 3D triangular meshes.
 It can read an render multiple 3D file formats include '.ply' used by our library. 
 
-The following figure show sa simple way to view the camera trajectory alongside with the 3D surface data reconstructed from the same set of camera frames:
+The following figure shows a simple way to view the camera trajectory alongside with the 3D surface data reconstructed from the same set of camera frames:
 
- <p align="center">
+<p align="center">
 <img src="images/meshlab.gif" />
 </p>
+
 
 
 # License

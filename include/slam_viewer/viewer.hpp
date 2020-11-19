@@ -13,7 +13,7 @@ namespace Slam_viewer {
 //  +--------------------------------------------------------
 //  |
 //  | Here goes all the types that are used in viewer.hpp
-//  |Quaternion
+//  |
 //  +--------------------------------------------------------
 
 struct Position {
@@ -47,8 +47,8 @@ struct Point {
 //  |       The viewer class
 //  +--------------------------------------------------------
 //  |
-//  |
-//  |
+//  | This class takes different camera poses (position and orientation)
+//  | and save the trajectory geometry to the output file
 //  | PS: This class throws std::runtime_error in case of failure
 //  |
 //  +--------------------------------------------------------
