@@ -3,7 +3,7 @@
 **Slam_viewer** is an open source and header only multi-platform library to view the camera trajectory offline.  
 
 <p align="center">
-<img src="images/introduction.png"  width="500" />
+<img src="images/introduction.gif" />
 </p>
 
 
